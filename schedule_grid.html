@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Self-Contained Schedule Grid</title>
+    <style>
+        /* --- Self-Contained CSS for Edlio Compatibility --- */
+        
+        /* General Body and Container Styles */
+        body {
+            background-color: #ffffff;
+            color: #333333;
+            font-family: Tahoma, Geneva, sans-serif;
+            padding: 20px; /* Replaces p-8 */
+            margin: 0;
+        }
+
+        .container-wrapper {
+            max-width: 800px; /* Replaces max-w-4xl */
+            margin-left: auto;
+            margin-right: auto; /* Replaces mx-auto */
+            font-family: Tahoma, Geneva, sans-serif; /* Replaces font-sans */
+        }
+        
+        /* Grid Layout */
+        .grid-container {
+            display: grid;
+            /* 6 columns total: DATE•TIME (1.5fr) + 5 days (1fr each) */
+            grid-template-columns: 1.5fr repeat(5, 1fr);
+            gap: 8px; /* Replaces 0.5rem */
+        }
+        
+        /* Base Cell Styling */
+        .cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 64px; /* Replaces 4rem */
+            border-radius: 8px; /* Replaces 0.5rem */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            text-decoration: none;
+            color: inherit;
+            cursor: default;
+            box-sizing: border-box; 
+            line-height: 1.2;
+            text-align: center;
+            padding: 5px; /* Added internal padding */
+            font-size: 1.6rem;
+            font-weight: 800;
+        }
+
+        /* Interactive Cell Styling (B2-F5) */
+        .active-cell {
+            cursor: pointer;
+            transition: transform 0.1s ease, box-shadow 0.1s ease;
+        }
+        .active-cell:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Header Cell Styling (Row 1 & Column A) */
+        .header-cell {
+            background-color: #1f1f1f;
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            box-shadow: none; 
+        }
+        /* Specific rounded corners for the header row (A1 and F1) */
+        .header-cell.start { border-top-left-radius: 8px; border-bottom-left-radius: 8px; }
+        .header-cell.end { border-top-right-radius: 8px; border-bottom-right-radius: 8px; }
+
+        /* Rows 2, 3, and 4 Cells */
+        .light-cell {
+            background-color: #ffffff;
+            color: #333333;
+            border: 2px solid #333333;
+        }
+
+        /* Row 5 (TECH ISSUE row) Cells */
+        .tech-row-cell {
+            background-color: #cccccc;
+            color: #333333;
+            border: 2px solid #333333;
+            letter-spacing: -0.05em;
+        }
+
+        /* Image styles */
+        .cell img {
+            height: 40px; /* Replaces h-10 */
+            max-width: 100%;
+            object-fit: contain; /* Replaces object-contain */
+        }
+
+        /* O2O Logo */
+        .o2o-logo-blended {
+            mix-blend-mode: multiply;
+        }
+
+        /* --- Message Box/Modal Styles --- */
+        #message-box {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.7);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Using visibility/opacity for transition */
+            visibility: hidden; 
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        #message-box.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+        #message-box .modal-content {
+            background-color: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            max-width: 384px; 
+            width: 90%; 
+        }
+
+        #message-box h3 {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: 1rem;
+            color: #1f2937;
+        }
+        #message-box p {
+            color: #374151;
+            margin-bottom: 1.5rem;
+            font-size: 0.875rem;
+        }
+        #message-box button {
+            width: 100%;
+            background-color: #4f46e5;
+            color: white;
+            font-weight: 600;
+            padding: 8px 16px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+        }
+        #message-box button:hover {
+            background-color: #4338ca;
+        }
+    </style>
+    <script>
+        // Base URLs
+        const GOOGLE_MEET_BASE_URL = "https://calendar.app.google/XceVoUqH4oHQRKc7A";
+        const TECH_ISSUE_URL = "https://www.1to1plus.com/login/NewPrague_MN";
+
+        function handleCellClick(content, url) {
+            if (url) {
+                console.log("Cell clicked! Content/Action:", content, "Navigating to:", url);
+                // Open the link in a new tab
+                window.open(url, '_blank');
+
+                // Show custom message box (using 'visible' class now)
+                document.getElementById('message-box-text').textContent = 'You clicked the cell for: ' + content + '. Navigating to: ' + url;
+                document.getElementById('message-box').classList.add('visible');
+            } else {
+                console.log("Header/Time Slot clicked (Non-interactive).");
+            }
+        }
+
+        function closeMessageBox() {
+            // Hide custom message box
+            document.getElementById('message-box').classList.remove('visible');
+        }
+    </script>
+</head>
+<body>
+
+    <!-- Custom Message Box for Clicks (since alert() is forbidden) -->
+    <div id="message-box">
+        <div class="modal-content">
+            <h3>Cell Action</h3>
+            <p id="message-box-text"></p>
+            <button onclick="closeMessageBox()">
+                OK
+            </button>
+        </div>
+    </div>
+
+    <div class="container-wrapper">
+        
+        <div class="grid-container">
+            
+            <!-- ROW 1: DAY HEADERS (Non-interactive) -->
+            <a class="cell header-cell start">DATE/TIME</a>
+            <a class="cell header-cell">MON</a>
+            <a class="cell header-cell">TUE</a>
+            <a class="cell header-cell">WED</a>
+            <a class="cell header-cell">THU</a>
+            <a class="cell header-cell end">FRI</a>
+
+            <!-- ROW 2: 7:00-8:00 (B2-F2 are Active) -->
+            <a class="cell light-cell">7:00-8:00</a> <!-- A2 -->
+            
+            <!-- B2: Custom URL -->
+            <a href="#" onclick="handleCellClick('HS on Mon', 'https://calendar.app.google/4V6KoyCBBmuCFHJC8')" class="cell light-cell active-cell">HS</a> 
+            
+            <!-- C2: Google Meet Base URL -->
+            <a href="#" onclick="handleCellClick('Google Meet on Tue 7:00', GOOGLE_MEET_BASE_URL)" class="cell light-cell active-cell">
+                <img src="https://f.hubspotusercontent20.net/hubfs/521324/__hs-marketplace__/Google%20Meet%20Logo-1.png" 
+                     alt="Google Meet Logo" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/34A853/ffffff?text=MEET';" />
+            </a>
+            
+            <!-- D2: Custom URL -->
+            <a href="#" onclick="handleCellClick('MS on Wed', 'https://calendar.app.google/ZezLEyzvSB9S3zGS7')" class="cell light-cell active-cell">MS</a> 
+            
+            <!-- E2: Custom URL -->
+            <a href="#" onclick="handleCellClick('EV on Thu', 'https://calendar.app.google/x6mUPsTtvjwL3KGL6')" class="cell light-cell active-cell">EV</a> 
+            
+            <!-- F2: Google Meet Base URL -->
+            <a href="#" onclick="handleCellClick('Google Meet on Fri 7:00', GOOGLE_MEET_BASE_URL)" class="cell light-cell active-cell">
+                <img src="https://f.hubspotusercontent20.net/hubfs/521324/__hs-marketplace__/Google%20Meet%20Logo-1.png" 
+                     alt="Google Meet Logo" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/1A73E8/ffffff?text=MEET';" />
+            </a>
+
+
+            <!-- ROW 3: 8:00-9:00 (B3-F3 are Active) -->
+            <a class="cell light-cell">8:00-9:00</a> <!-- A3 -->
+            
+            <!-- B3: Custom URL -->
+            <a href="#" onclick="handleCellClick('FR on Mon', 'https://calendar.app.google/Pki3gSmeU7zwqisd7')" class="cell light-cell active-cell">FR</a> 
+            
+            <!-- C3: Google Meet Base URL -->
+            <a href="#" onclick="handleCellClick('Google Meet on Tue 8:00', GOOGLE_MEET_BASE_URL)" class="cell light-cell active-cell">
+                <img src="https://f.hubspotusercontent20.net/hubfs/521324/__hs-marketplace__/Google%20Meet%20Logo-1.png" 
+                     alt="Google Meet Logo" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/1A73E8/ffffff?text=MEET';" />
+            </a>
+            
+            <!-- D3: Custom URL -->
+            <a href="#" onclick="handleCellClick('RS on Wed', 'https://calendar.app.google/1wMGoov5ubPRUpgx6')" class="cell light-cell active-cell">RS</a> 
+            
+            <!-- E3: Google Meet Base URL -->
+            <a href="#" onclick="handleCellClick('Google Meet on Thu 8:00', GOOGLE_MEET_BASE_URL)" class="cell light-cell active-cell">
+                <img src="https://f.hubspotusercontent20.net/hubfs/521324/__hs-marketplace__/Google%20Meet%20Logo-1.png" 
+                     alt="Google Meet Logo" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/F9AB00/ffffff?text=MEET';" />
+            </a>
+            
+            <!-- F3: Google Meet Base URL -->
+            <a href="#" onclick="handleCellClick('Google Meet on Fri 8:00', GOOGLE_MEET_BASE_URL)" class="cell light-cell active-cell">
+                <img src="https://f.hubspotusercontent20.net/hubfs/521324/__hs-marketplace__/Google%20Meet%20Logo-1.png" 
+                     alt="Google Meet Logo" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/34A853/ffffff?text=MEET';" />
+            </a>
+
+            <!-- ROW 4: 9:00-3:00 (B4-F4 are Active) -->
+            <a class="cell light-cell">9:00-3:00</a> <!-- A4 -->
+            
+            <!-- B4: Google Meet Base URL -->
+            <a href="#" onclick="handleCellClick('Google Meet on Mon 9:00', GOOGLE_MEET_BASE_URL)" class="cell light-cell active-cell">
+                <img src="https://f.hubspotusercontent20.net/hubfs/521324/__hs-marketplace__/Google%20Meet%20Logo-1.png" 
+                     alt="Google Meet Logo" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/1A73E8/ffffff?text=MEET';" />
+            </a>
+            
+            <!-- C4: Google Meet Base URL -->
+            <a href="#" onclick="handleCellClick('Google Meet on Tue 9:00', GOOGLE_MEET_BASE_URL)" class="cell light-cell active-cell">
+                 <img src="https://f.hubspotusercontent20.net/hubfs/521324/__hs-marketplace__/Google%20Meet%20Logo-1.png" 
+                     alt="Google Meet Logo" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/34A853/ffffff?text=MEET';" />
+            </a>
+            
+            <!-- D4: Google Meet Base URL -->
+            <a href="#" onclick="handleCellClick('Google Meet on Wed 9:00', GOOGLE_MEET_BASE_URL)" class="cell light-cell active-cell">
+                 <img src="https://f.hubspotusercontent20.net/hubfs/521324/__hs-marketplace__/Google%20Meet%20Logo-1.png" 
+                     alt="Google Meet Logo" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/F9AB00/ffffff?text=MEET';" />
+            </a>
+            
+            <!-- E4: Google Meet Base URL -->
+            <a href="#" onclick="handleCellClick('Google Meet on Thu 9:00', GOOGLE_MEET_BASE_URL)" class="cell light-cell active-cell">
+                 <img src="https://f.hubspotusercontent20.net/hubfs/521324/__hs-marketplace__/Google%20Meet%20Logo-1.png" 
+                     alt="Google Meet Logo" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/1A73E8/ffffff?text=MEET';" />
+            </a>
+            
+            <!-- F4: Google Meet Base URL -->
+            <a href="#" onclick="handleCellClick('Google Meet on Fri 9:00', GOOGLE_MEET_BASE_URL)" class="cell light-cell active-cell">
+                 <img src="https://f.hubspotusercontent20.net/hubfs/521324/__hs-marketplace__/Google%20Meet%20Logo-1.png" 
+                     alt="Google Meet Logo" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/34A853/ffffff?text=MEET';" />
+            </a>
+            
+            <!-- ROW 5: TECH ISSUE (B5-F5 are Active) -->
+            <a class="cell tech-row-cell">TECH ISSUE</a> <!-- A5 -->
+            
+            <!-- B5: Tech Issue URL -->
+            <a href="#" onclick="handleCellClick('Tech Issue Mon', TECH_ISSUE_URL)" class="cell tech-row-cell active-cell">
+                <img src="https://onetooneplus.com/wp-content/uploads/2019/05/download.png" 
+                     alt="O2O Logo" 
+                     class="o2o-logo-blended"
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/333333/ffffff?text=LOGO';" />
+            </a>
+            <!-- C5: Tech Issue URL -->
+            <a href="#" onclick="handleCellClick('Tech Issue Tue', TECH_ISSUE_URL)" class="cell tech-row-cell active-cell">
+                 <img src="https://onetooneplus.com/wp-content/uploads/2019/05/download.png" 
+                     alt="O2O Logo" 
+                     class="o2o-logo-blended"
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/333333/ffffff?text=LOGO';" />
+            </a>
+            <!-- D5: Tech Issue URL -->
+            <a href="#" onclick="handleCellClick('Tech Issue Wed', TECH_ISSUE_URL)" class="cell tech-row-cell active-cell">
+                 <img src="https://onetooneplus.com/wp-content/uploads/2019/05/download.png" 
+                     alt="O2O Logo" 
+                     class="o2o-logo-blended"
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/333333/ffffff?text=LOGO';" />
+            </a>
+            <!-- E5: Tech Issue URL -->
+            <a href="#" onclick="handleCellClick('Tech Issue Thu', TECH_ISSUE_URL)" class="cell tech-row-cell active-cell">
+                 <img src="https://onetooneplus.com/wp-content/uploads/2019/05/download.png" 
+                     alt="O2O Logo" 
+                     class="o2o-logo-blended"
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/333333/ffffff?text=LOGO';" />
+            </a>
+            <!-- F5: Tech Issue URL -->
+            <a href="#" onclick="handleCellClick('Tech Issue Fri', TECH_ISSUE_URL)" class="cell tech-row-cell active-cell">
+                 <img src="https://onetooneplus.com/wp-content/uploads/2019/05/download.png" 
+                     alt="O2O Logo" 
+                     class="o2o-logo-blended"
+                     onerror="this.onerror=null; this.src='https://placehold.co/40x40/333333/ffffff?text=LOGO';" />
+            </a>
+            
+        </div>
+    </div>
+</body>
+</html>
