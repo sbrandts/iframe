@@ -36,7 +36,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            height: 50px; /* Adjusted cell height: 56px -> 50px */
+            height: 45px; /* Reduced cell height: 50px -> 45px */
             border-radius: 8px; /* Replaces 0.5rem */
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
             text-decoration: none;
@@ -67,7 +67,7 @@
             font-weight: 800;
             font-size: 1.0rem; 
             text-transform: uppercase;
-            box-shadow: none;
+            /* Removed box-shadow: none; to inherit the shadow from .cell */
             border: 2px solid #333333; /* Added 2px border in #333333 */
         }
         /* Specific rounded corners for the header row (A1 and F1) */
@@ -148,8 +148,12 @@
             <!-- D2: Custom URL -->
             <a href="#" onclick="handleCellClick('MS on Wed', 'https://calendar.app.google/ZezLEyzvSB9S3zGS7')" class="cell light-cell active-cell">MS</a> 
             
-            <!-- E2: Custom URL -->
-            <a href="#" onclick="handleCellClick('EV on Thu', 'https://calendar.app.google/x6mUPsTtvjwL3KGL6')" class="cell light-cell active-cell">EV</a> 
+            <!-- E2: Swapped content from E3 (Google Meet Logo) -->
+            <a href="#" onclick="handleCellClick('Google Meet on Thu 8:00', GOOGLE_MEET_BASE_URL)" class="cell light-cell active-cell">
+                <img src="https://f.hubspotusercontent20.net/hubfs/521324/__hs-marketplace__/Google%20Meet%20Logo-1.png" 
+                     alt="Google Meet Logo" 
+                     onerror="this.onerror=null; this.src='https://placehold.co/24x24/F9AB00/ffffff?text=MEET';" />
+            </a>
             
             <!-- F2: Google Meet Base URL -->
             <a href="#" onclick="handleCellClick('Google Meet on Fri 7:00', GOOGLE_MEET_BASE_URL)" class="cell light-cell active-cell">
@@ -175,12 +179,8 @@
             <!-- D3: Custom URL -->
             <a href="#" onclick="handleCellClick('RS on Wed', 'https://calendar.app.google/1wMGoov5ubPRUpgx6')" class="cell light-cell active-cell">RS</a> 
             
-            <!-- E3: Google Meet Base URL -->
-            <a href="#" onclick="handleCellClick('Google Meet on Thu 8:00', GOOGLE_MEET_BASE_URL)" class="cell light-cell active-cell">
-                <img src="https://f.hubspotusercontent20.net/hubfs/521324/__hs-marketplace__/Google%20Meet%20Logo-1.png" 
-                     alt="Google Meet Logo" 
-                     onerror="this.onerror=null; this.src='https://placehold.co/24x24/F9AB00/ffffff?text=MEET';" />
-            </a>
+            <!-- E3: Swapped content from E2 ("EV") -->
+            <a href="#" onclick="handleCellClick('EV on Thu', 'https://calendar.app.google/x6mUPsTtvjwL3KGL6')" class="cell light-cell active-cell">EV</a> 
             
             <!-- F3: Google Meet Base URL -->
             <a href="#" onclick="handleCellClick('Google Meet on Fri 8:00', GOOGLE_MEET_BASE_URL)" class="cell light-cell active-cell">
